@@ -2,7 +2,7 @@
 
 ## Descrição
 
-Este repositório tem como objetivo reunir, organizar e disponibilizar os materiais acadêmicos produzidos durante a disciplina **Comunicação em Saúde**, integrante da II turma do Programa de Residência em Vigilância em Saúde da Fiocruz Brasília.
+Este repositório tem como objetivo reunir, organizar e disponibilizar os materiais acadêmicos produzidos durante a disciplina Comunicação em Saúde, integrante da II turma do Programa de Residência em Vigilância em Saúde da Fiocruz Brasília.
 
 ## Objetivo
 

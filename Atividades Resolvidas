@@ -1,1 +1,361 @@
+# Lista 1
 
+# Exercício 1
+
+# Dados fornecidos
+notas <- c(8.5, 7.0, 9.2, 6.8, 8.0, 7.5, 9.0, 5.5, 8.8, 7.2)
+
+# 1. ORGANIZAÇÃO
+
+# Ordenar as notas em ordem crescente
+notas_crescente <- sort(notas)
+print("Notas em ordem crescente:")
+print(notas_crescente) 
+
+
+# Inverter a ordem das notas (da maior para a menor)
+notas_decrescente <- rev(sort(notas))
+print("Notas em ordem decrescente:")
+print(notas_decrescente) 
+
+# Calcular a média das notas
+media_notas <- mean(notas)
+print(paste("Média das notas:", round(media_notas, 2))) 
+
+# Encontrar a mediana das notas
+mediana_notas <- median(notas)
+print(paste("Mediana das notas:", round(mediana_notas, 2))) 
+
+# Determinar a nota mais alta e a mais baixa
+nota_maxima <- max(notas)
+nota_minima <- min(notas)
+print(paste("Nota mais alta:", nota_maxima)) 
+print(paste("Nota mais baixa:", nota_minima)) 
+
+# Calcular o desvio padrão das notas
+desvio_padrao <- sd(notas)
+print(paste("Desvio padrão das notas:", round(desvio_padrao, 2))) 
+
+# 3. FREQUÊNCIA
+
+# Criar tabela de frequências
+tabela_frequencia <- table(notas)
+print("Tabela de frequências das notas:")
+print(tabela_frequencia) 
+
+# 4. RESUMO ESTATÍSTICO COMPLETO
+
+print("Resumo estatístico completo das notas:")
+print(summary(notas)) 
+
+# Visualização adicional: frequência ordenada
+print("Frequência das notas (ordenada):")
+print(sort(tabela_frequencia, decreasing = TRUE)) 
+
+# Dados
+notas <- c(8.5, 7.0, 9.2, 6.8, 8.0, 7.5, 9.0, 5.5, 8.8, 7.2)
+
+# Desafio extra
+notas_arredondadas <- round(notas, 1)
+media_original <- mean(notas)
+media_arredondada <- mean(notas_arredondadas)
+
+# Resultados
+print(notas_arredondadas) 
+
+print(paste("Média original:", media_original)) 
+
+print(paste("Média arredondada:", media_arredondada)) 
+
+print(paste("Diferença:", media_arredondada - media_original)) 
+
+# Exercício 2
+
+# 1. Carregar o conjunto de dados
+data(mtcars)
+
+# 2. Explorar a estrutura dos dados
+str(mtcars)
+# Observações: 32 linhas e 11 colunas
+
+# 3. Resumo estatístico das variáveis
+summary(mtcars)
+# Variáveis numéricas: mpg, disp, hp, drat, wt, qsec
+# Variáveis categóricas: cyl, vs, am, gear, carb
+
+# 4. Estatísticas descritivas da variável mpg
+mpg <- mtcars$mpg
+mean(mpg)    # média 
+median(mpg)  # mediana 
+sd(mpg)      # desvio padrão 
+min(mpg)     # mínimo 
+max(mpg)     # máximo 
+
+# 5. Ordenar a variável hp
+hp <- mtcars$hp
+sort(hp)          # ordem crescente 
+# 6. Criar sequências de números
+seq(1, 10, by = 2)   
+seq(5, 15, by = 3)   
+
+# 7. Repetir elementos
+rep(7, 4)            
+rep('a', 10)         
+
+# 8. Converter entre maiúsculas e minúsculas
+cyl <- as.character(mtcars$cyl)  # converter para texto
+toupper(cyl)          # maiúsculas
+
+
+tolower(cyl)          # minúsculas
+
+# Lista 2
+
+# EXERCÍCIO - GESTÃO DE PROGRAMAS DE SAÚDE
+
+# 1. CRIAR UMA LISTA COM AS INFORMAÇÕES DE CADA PROGRAMA
+
+programa1 <- list(
+  nome = "Vigilância entomológica de triatomíneos",
+  objetivos = "Levantamento da riqueza e abundância de triatomíneos; Pesquisa molecular quanto a presença de tripanossomatídeos; Análise espaço-temporal",
+  publico_alvo = "Moradores de áreas rurais",
+  orcamento = 500000.00,
+  data_inicio = as.Date("2026-04-01"),
+  data_fim = as.Date("2027-04-01")
+)
+
+programa2 <- list(
+  nome = "Vigilância entomológica de carrapatos",
+  objetivos = "Levantamento da riqueza e abundância de carrapatos; Pesquisa molecular quanto a presença de bactérias do grupo febre maculosa; Análise espaço-temporal",
+  publico_alvo = "Frequentadores de parques recreativos",
+  orcamento = 900000.00,
+  data_inicio = as.Date("2026-08-01"),
+  data_fim = as.Date("2028-08-01")
+)
+
+programa3 <- list(
+  nome = "Vigilância epidemiológica da Doença de Chagas e Febre Maculosa",
+  objetivos = "Levantamento da subnotificação das doenças; Soroprevalência da doença no estado; Análise espaço-temporal",
+  publico_alvo = "Todos os moradores do estado",
+  orcamento = 1000000.00,
+  data_inicio = as.Date("2026-06-01"),
+  data_fim = as.Date("2030-06-01")
+)
+
+# Criar lista geral com todos os programas
+programas <- list(programa1, programa2, programa3)
+
+# 2. CALCULAR O ORÇAMENTO TOTAL
+orcamento_total <- programa1$orcamento + programa2$orcamento + programa3$orcamento
+print(paste("Orçamento total: R$", format(orcamento_total, big.mark = ".", decimal.mark = ",")))
+
+# 3. IDENTIFICAR O PROGRAMA COM MAIOR ORÇAMENTO
+orcamentos <- c(programa1$orcamento, programa2$orcamento, programa3$orcamento)
+nomes <- c(programa1$nome, programa2$nome, programa3$nome)
+indice_maior <- which.max(orcamentos)
+
+print(paste("Programa com maior orçamento:", nomes[indice_maior]))
+print(paste("Orçamento: R$", format(orcamentos[indice_maior], big.mark = ".", decimal.mark = ",")))
+
+# 4. LISTAR PROGRAMAS EM ANDAMENTO
+data_atual <- Sys.Date()
+print(paste("Data atual:", data_atual))
+
+for(i in 1:3) {
+  if(data_atual >= programas[[i]]$data_inicio & data_atual <= programas[[i]]$data_fim) {
+    print(paste("Em andamento:", programas[[i]]$nome))
+  }
+}
+
+# 5. DESAFIO: PROGRAMA COM DATA DE INÍCIO MAIS RECENTE
+datas_inicio <- c(programa1$data_inicio, programa2$data_inicio, programa3$data_inicio)
+indice_recente <- which.max(datas_inicio)
+
+print(paste("Programa com início mais recente:", nomes[indice_recente]))
+print(paste("Data de início:", datas_inicio[indice_recente]))
+
+# Lista 3
+
+#Exercicio 1
+
+# Configurar diretório e carregar pacotes
+setwd("C:/Users/isado/Desktop/R")
+library(tidyverse)
+
+# ÚNICA VARIÁVEL com todo o processo usando pipe
+resultado <- read_delim("sinasc_cnv_nvdf113627138_0_244_172.csv",
+                        delim = ";",
+                        skip = 3,
+                        locale = locale(encoding = "latin1"),
+                        col_names = c("ano", "sim", "nao", "ignorado", "total")) %>%
+  filter(ano != "Total") %>%
+  mutate(across(c(ano, sim, nao, ignorado, total), as.numeric)) %>%
+  filter(ano == 2024) %>%
+  mutate(uf = "DF",
+         media_mensal = total / 12)
+
+# Visualizar resultado
+print(resultado)
+
+#Exercicio 2
+
+
+# 1. Configurar diretório de trabalho
+setwd("C:/Users/isado/Desktop/R")
+getwd()
+
+# 2. Criar o arquivo CSV vazio
+file.create("pacientes.csv")
+
+# 3. Criar as variáveis com os dados
+nome_completo <- c("João da Silva", 
+                   "Maria Souza Santos", 
+                   "Pedro Henrique Alves", 
+                   "Ana Clara Oliveira",
+                   "Carlos Eduardo Lima",
+                   "Patrícia Aparecida Gomes",
+                   "Roberto Fernandes Costa",
+                   "Fernanda Rodrigues Mendes",
+                   "Lucas Gabriel Ferreira")
+
+data_do_atendimento <- c("2024-07-12", 
+                         "2024-07-12", 
+                         "2024-07-12", 
+                         "2024-07-11",
+                         "2024-07-13",
+                         "2024-07-13",
+                         "2024-07-14",
+                         "2024-07-14",
+                         "2024-07-15")
+
+# 4. Criar o dataframe
+dados <- data.frame(nome_completo, data_do_atendimento)
+
+# 5. Escrever os dados no arquivo CSV
+write.csv(dados, "pacientes.csv", row.names = FALSE, fileEncoding = "UTF-8")
+cat("\n Arquivo pacientes.csv criado com sucesso!\n")
+cat("Total de pacientes:", nrow(dados), "\n")
+
+# 6. Ler os dados do arquivo CSV
+pacientes <- read.csv("pacientes.csv", fileEncoding = "UTF-8")
+cat("\n=== DADOS CARREGADOS ===\n")
+print(pacientes)
+
+# 7. Extrair primeiro e último nomes usando strsplit
+pacientes$primeiro_nome <- sapply(strsplit(pacientes$nome_completo, " "), function(x) x[1])
+pacientes$ultimo_nome <- sapply(strsplit(pacientes$nome_completo, " "), function(x) x[length(x)])
+
+# 8. Visualizar o resultado
+cat("\n=== DADOS COM NOMES EXTRAÍDOS ===\n")
+print(pacientes)
+
+# 9. Salvar em um novo arquivo CSV
+write.csv(pacientes, "nomes_pacientes.csv", row.names = FALSE, fileEncoding = "UTF-8")
+cat("\n Arquivo nomes_pacientes.csv criado com sucesso!\n")
+
+# 10. Verificar os arquivos criados
+cat("\n=== ARQUIVOS CRIADOS ===\n")
+print(list.files(pattern = "\\.csv$"))
+
+# 11. Estatísticas adicionais
+cat("\n=== ESTATÍSTICAS ===\n")
+cat("Total de pacientes:", nrow(pacientes), "\n")
+cat("Datas únicas:", paste(unique(pacientes$data_do_atendimento), collapse = ", "), "\n")
+cat("Pacientes por data:\n")
+print(table(pacientes$data_do_atendimento))
+
+# Projeto Final - Taxa de Nascidos Vivos (TO - 2019)
+
+
+# =========================
+# 1. Configuração inicial
+# =========================
+library(microdatasus)
+library(dplyr)
+library(ggplot2)
+
+# Caminho de saída
+caminho_saida <- "C:/Users/isado/Desktop/R"
+
+# =========================
+# 2. Coleta de dados
+# =========================
+dados_sim <- fetch_datasus(
+  year_start = 2019,
+  year_end = 2019,
+  uf = "TO",
+  information_system = "SIM-DO"
+)
+
+dados_sinasc <- fetch_datasus(
+  year_start = 2019,
+  year_end = 2019,
+  uf = "TO",
+  information_system = "SINASC"
+)
+
+# =========================
+# 3. Limpeza e preprocessamento
+# =========================
+dados_sim <- process_sim(dados_sim)
+dados_sinasc <- process_sinasc(dados_sinasc)
+
+# =========================
+# 4. Transformação
+# =========================
+total_nascidos <- dados_sinasc %>%
+  summarise(total = n()) %>%
+  pull(total)
+
+pop_aprox <- dados_sim %>%
+  summarise(total = n()) %>%
+  pull(total)
+
+# =========================
+# 5. Análise
+# =========================
+taxa_natalidade <- (total_nascidos / pop_aprox) * 1000
+
+# =========================
+# 6. Visualização (salvando gráfico)
+# =========================
+grafico <- ggplot(data.frame(valor = taxa_natalidade), aes(x = "", y = valor)) +
+  geom_col() +
+  labs(
+    title = "Taxa de Nascidos Vivos - TO (2019)",
+    y = "Taxa por 1.000 habitantes",
+    x = ""
+  ) +
+  theme_minimal()
+
+# Salvar gráfico
+ggsave(
+  filename = paste0(caminho_saida, "/grafico_taxa_natalidade.png"),
+  plot = grafico,
+  width = 6,
+  height = 4
+)
+
+# =========================
+# 7. Geração do relatório
+# =========================
+relatorio <- paste(
+  "====================================",
+  "\nRELATÓRIO - TAXA DE NASCIDOS VIVOS",
+  "\nEstado: Tocantins (TO)",
+  "\nAno: 2019",
+  "\n====================================",
+  "\nTotal de nascidos vivos:", total_nascidos,
+  "\nPopulação aproximada:", pop_aprox,
+  "\nTaxa de natalidade (por 1.000 hab.):", round(taxa_natalidade, 2),
+  "\n====================================",
+  "\nObservação:",
+  "\nA população foi estimada com base nos dados disponíveis (SIM),",
+  "\npodendo diferir dos valores oficiais do IBGE."
+)
+
+# Salvar relatório em arquivo .txt
+writeLines(
+  relatorio,
+  con = paste0(caminho_saida, "/relatorio_taxa_natalidade.txt")
+)

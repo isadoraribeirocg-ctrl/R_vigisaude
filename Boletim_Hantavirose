@@ -1,0 +1,47 @@
+Boletim
+
+Doença: Hantavirose 
+Período: 2021 a 2025
+Fonte: DATASUS/SINAN
+
+1 - Tema: Hantavirose e Ilhas de Calor
+
+2 - Produto: Boletim de Vigilância Epidemiológica sobre Hantavirose e Ilhas de Calor nos últimos 5 anos no Distrito Federal: perfil epidemiológico e distribuição espaço-temporal
+
+3 - Referências
+
+3.1. Modelos: boletins que servem de inspiração
+	Qual o público alvo? Construção de avatar: profissionais de saúde
+
+3.2. Bibliografia e Linkografia: guias, manuais, repositórios (guia de vigilância, livro verde)
+  * Conteúdo dos boletins técnicos
+  * Guias oficiais (OPAS/OMS, SVSA, Secretarias, RIPSA)
+  * Artigos ou teses/dissertações
+
+4 - Dados:
+
+4.1. Aquisição - > baixados, apis, solicitação para um fornecedor (LAI)
+4.2. Armazenagem
+4.3. Inspecionar as bases (raw)
+4.4. Tratamento das bases
+4.5. Inspecionar os dados
+4.6. Tratamento dos dados
+4.7. Análises descritivas
+4.8. Análises preditivas
+4.9. Análises diagnósticas
+4.10. Análises prescritiva
+
+5 - Interpretação
+
+5.1. Análises diagnósticas
+5.2. Análises prescritivas
+
+6 - Montagem do Boletim
+
+6.1. Sessões
+6.2. Summaries
+6.3. Gráficos (visuais)
+6.4. Textos
+6.5. Exportação
+
+7 - Publicação de Disseminação

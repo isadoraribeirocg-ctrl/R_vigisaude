@@ -1,0 +1,281 @@
+# Conexão do Google Drive no R
+
+## Login
+
+### usuario
+### senha
+### api Google Cloud
+
+## Caminho da pasta (path)
+https://drive.google.com/drive/folders/1BFr1Sd1iF-gDqvXB7kNX4I2A-vUNC72Z?usp=sharing
+
+## Chamada da pasta
+O scrip deve acessar a pasta com privilégios de editor e esse acesso deve ser permanente
+
+## Acessar o CRUD
+### Leitura
+### Criar
+### Editar
+### Deletar
+
+# Regras
+
+1- Minha pasta pessoal
+2- Script esteja em linguagem R
+
+
+
+# Script R para Google Drive - Versão Ultra Simples para Colab
+# ============================================================
+
+# 1. INSTALAÇÃO E CARREGAMENTO
+if (!require("googledrive")) install.packages("googledrive")
+library(googledrive)
+
+# 2. AUTENTICAÇÃO
+drive_auth(use_oob = TRUE, scopes = "https://www.googleapis.com/auth/drive")
+
+# 3. CONFIGURAÇÃO
+pasta_id <- "1BFr1Sd1iF-gDqvXB7kNX4I2A-vUNC72Z"
+
+# 4. FUNÇÕES BÁSICAS (SEM RETORNOS COMPLEXOS)
+
+# Listar arquivos (usando apenas cat)
+listar_arquivos <- function() {
+  cat("\n=== ARQUIVOS NA PASTA ===\n")
+  arquivos <- drive_ls(as_id(pasta_id))
+  
+  if(nrow(arquivos) == 0) {
+    cat("Nenhum arquivo encontrado.\n")
+  } else {
+    for(i in 1:nrow(arquivos)) {
+      tipo <- ifelse(grepl("folder", arquivos$drive_resource[[i]]$mimeType), "[PASTA]", "[ARQUIVO]")
+      cat(sprintf("%s %s\n", tipo, arquivos$name[i]))
+    }
+    cat(sprintf("\nTotal: %d itens\n", nrow(arquivos)))
+  }
+  cat("=====================\n")
+}
+
+# Criar pasta
+criar_pasta <- function(nome) {
+  cat(sprintf("\nCriando pasta: %s\n", nome))
+  tryCatch({
+    drive_mkdir(nome, path = as_id(pasta_id))
+    cat("✓ Pasta criada com sucesso!\n")
+  }, error = function(e) {
+    cat("✗ Erro ao criar pasta:", e$message, "\n")
+  })
+}
+
+# Criar arquivo texto
+criar_arquivo <- function(nome, conteudo) {
+  cat(sprintf("\nCriando arquivo: %s\n", nome))
+  tryCatch({
+    arquivo_temp <- tempfile()
+    writeLines(conteudo, arquivo_temp)
+    drive_upload(arquivo_temp, path = as_id(pasta_id), name = nome)
+    unlink(arquivo_temp)
+    cat("✓ Arquivo criado!\n")
+  }, error = function(e) {
+    cat("✗ Erro:", e$message, "\n")
+  })
+}
+
+# Ler arquivo
+ler_arquivo <- function(nome) {
+  cat(sprintf("\n=== CONTEÚDO DE: %s ===\n", nome))
+  
+  # Buscar arquivo
+  arquivo <- drive_find(q = sprintf("name='%s' and '%s' in parents", nome, pasta_id))
+  
+  if(nrow(arquivo) == 0) {
+    cat("Arquivo não encontrado!\n")
+    cat("=========================\n")
+    return(invisible(NULL))
+  }
+  
+  # Baixar e ler
+  arquivo_temp <- tempfile()
+  drive_download(arquivo, arquivo_temp, overwrite = TRUE)
+  conteudo <- readLines(arquivo_temp, warn = FALSE)
+  unlink(arquivo_temp)
+  
+  # Mostrar conteúdo
+  for(linha in conteudo) {
+    cat(linha, "\n")
+  }
+  cat("=========================\n")
+}
+
+# Editar arquivo
+editar_arquivo <- function(nome, novo_conteudo) {
+  cat(sprintf("\nEditando arquivo: %s\n", nome))
+  
+  arquivo <- drive_find(q = sprintf("name='%s' and '%s' in parents", nome, pasta_id))
+  
+  if(nrow(arquivo) == 0) {
+    cat("Arquivo não encontrado!\n")
+    return(invisible(FALSE))
+  }
+  
+  arquivo_temp <- tempfile()
+  writeLines(novo_conteudo, arquivo_temp)
+  drive_update(arquivo, media = arquivo_temp)
+  unlink(arquivo_temp)
+  cat("✓ Arquivo atualizado!\n")
+}
+
+# Deletar arquivo
+deletar_arquivo <- function(nome) {
+  cat(sprintf("\nDeletando arquivo: %s\n", nome))
+  
+  arquivo <- drive_find(q = sprintf("name='%s' and '%s' in parents", nome, pasta_id))
+  
+  if(nrow(arquivo) == 0) {
+    cat("Arquivo não encontrado!\n")
+    return(invisible(FALSE))
+  }
+  
+  drive_trash(arquivo)
+  cat("✓ Arquivo movido para a lixeira!\n")
+}
+
+# 5. FUNÇÕES ADICIONAIS
+
+# Exportar dados (data frame) para CSV
+exportar_dados <- function(df, nome_arquivo) {
+  cat(sprintf("\nExportando dados para: %s\n", nome_arquivo))
+  
+  arquivo_temp <- tempfile(fileext = ".csv")
+  write.csv(df, arquivo_temp, row.names = FALSE)
+  drive_upload(arquivo_temp, path = as_id(pasta_id), name = nome_arquivo)
+  unlink(arquivo_temp)
+  
+  cat(sprintf("✓ Exportados %d registros\n", nrow(df)))
+}
+
+# Importar CSV
+importar_dados <- function(nome_arquivo) {
+  cat(sprintf("\nImportando arquivo: %s\n", nome_arquivo))
+  
+  arquivo <- drive_find(q = sprintf("name='%s' and '%s' in parents", nome_arquivo, pasta_id))
+  
+  if(nrow(arquivo) == 0) {
+    cat("Arquivo não encontrado!\n")
+    return(invisible(NULL))
+  }
+  
+  arquivo_temp <- tempfile(fileext = ".csv")
+  drive_download(arquivo, arquivo_temp, overwrite = TRUE)
+  dados <- read.csv(arquivo_temp)
+  unlink(arquivo_temp)
+  
+  cat(sprintf("✓ Importados %d registros\n", nrow(dados)))
+  cat("\nPrimeiras linhas:\n")
+  print(head(dados))
+  
+  return(dados)
+}
+
+# Upload de arquivo local
+upload_arquivo <- function(caminho_local) {
+  if(!file.exists(caminho_local)) {
+    cat("Arquivo não encontrado:", caminho_local, "\n")
+    return(invisible(FALSE))
+  }
+  
+  nome <- basename(caminho_local)
+  cat(sprintf("\nFazendo upload: %s\n", nome))
+  drive_upload(caminho_local, path = as_id(pasta_id), name = nome)
+  cat("✓ Upload concluído!\n")
+}
+
+# Download de arquivo
+download_arquivo <- function(nome, destino = NULL) {
+  if(is.null(destino)) destino <- nome
+  
+  cat(sprintf("\nBaixando arquivo: %s\n", nome))
+  
+  arquivo <- drive_find(q = sprintf("name='%s' and '%s' in parents", nome, pasta_id))
+  
+  if(nrow(arquivo) == 0) {
+    cat("Arquivo não encontrado!\n")
+    return(invisible(FALSE))
+  }
+  
+  drive_download(arquivo, destino, overwrite = TRUE)
+  cat(sprintf("✓ Download concluído: %s\n", destino))
+}
+
+# 6. TESTE DE CONEXÃO
+cat("\n")
+cat(paste(rep("=", 50), collapse = ""), "\n")
+cat("CONECTANDO AO GOOGLE DRIVE\n")
+cat(paste(rep("=", 50), collapse = ""), "\n")
+
+# Testar conexão
+tryCatch({
+  pasta_info <- drive_get(id = pasta_id)
+  cat(sprintf("\n✓ Conectado à pasta: %s\n", pasta_info$name))
+  cat(sprintf("  ID: %s\n", pasta_info$id))
+  
+  # Listar arquivos existentes
+  listar_arquivos()
+  
+}, error = function(e) {
+  cat("\n✗ Erro de conexão!\n")
+  cat("  Verifique se:\n")
+  cat("  1. O código de autorização foi inserido corretamente\n")
+  cat("  2. Você autorizou todas as permissões\n")
+  cat("  3. O ID da pasta está correto\n")
+})
+
+cat("\n", paste(rep("=", 50), collapse = ""), "\n")
+cat("FUNÇÕES DISPONÍVEIS:\n")
+cat("  listar_arquivos()                 - Listar arquivos\n")
+cat("  criar_pasta('nome')               - Criar pasta\n")
+cat("  criar_arquivo('nome', c('texto')) - Criar arquivo\n")
+cat("  ler_arquivo('nome')               - Ler arquivo\n")
+cat("  editar_arquivo('nome', c('novo')) - Editar arquivo\n")
+cat("  deletar_arquivo('nome')           - Deletar arquivo\n")
+cat("  exportar_dados(df, 'nome.csv')    - Exportar DataFrame\n")
+cat("  importar_dados('nome.csv')        - Importar CSV\n")
+cat("  upload_arquivo('caminho')         - Upload local\n")
+cat("  download_arquivo('nome')          - Download\n")
+cat(paste(rep("=", 50), collapse = ""), "\n")
+
+# 7. EXEMPLO PRÁTICO
+cat("\n", paste(rep("=", 50), collapse = ""), "\n")
+cat("EXEMPLO PRÁTICO\n")
+cat(paste(rep("=", 50), collapse = ""), "\n")
+
+# Criar arquivo de teste
+criar_arquivo("exemplo.txt", c("Linha 1", "Linha 2", "Linha 3", "Teste no Colab"))
+
+# Ler o arquivo
+ler_arquivo("exemplo.txt")
+
+# Criar dados de exemplo
+dados <- data.frame(
+  Nome = c("Ana", "Carlos", "Mariana"),
+  Idade = c(28, 35, 31),
+  Cidade = c("São Paulo", "Rio de Janeiro", "Belo Horizonte")
+)
+
+# Exportar dados
+exportar_dados(dados, "exemplo.csv")
+
+# Listar arquivos
+listar_arquivos()
+
+# Importar dados
+dados_importados <- importar_dados("exemplo.csv")
+
+# Limpar arquivos de teste
+deletar_arquivo("exemplo.txt")
+deletar_arquivo("exemplo.csv")
+
+cat("\n✓ Exemplo concluído!\n")
+cat(paste(rep("=", 50), collapse = ""), "\n")
+

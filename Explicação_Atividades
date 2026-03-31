@@ -1,0 +1,199 @@
+# Lista 1 - Operações Básicas e Estatística Descritiva
+
+## Exercício 1 - Análise de Notas
+
+### Descrição
+Análise estatística de um vetor de notas de alunos, utilizando funções embutidas do R.
+
+### Código e Explicações
+
+| Item | Código | Por que usar? |
+|------|--------|----------------|
+| Ordenação crescente | `sort(notas)` | Para visualizar dados em ordem crescente |
+| Ordenação decrescente | `rev(sort(notas))` | Para visualizar dados em ordem decrescente |
+| Média | `mean(notas)` | Medida de tendência central (ponto médio) |
+| Mediana | `median(notas)` | Medida robusta contra outliers (valor central) |
+| Valor mínimo e máximo | `min(notas)` / `max(notas)` | Para conhecer amplitude dos dados |
+| Desvio padrão | `sd(notas)` | Medida de dispersão (variação dos dados) |
+| Tabela de frequência | `table(notas)` | Ver quantas vezes cada valor aparece |
+| Resumo completo | `summary(notas)` | 6 estatísticas de uma vez (min, Q1, mediana, média, Q3, max) |
+
+### Desafio Extra - Arredondamento
+
+| Item | Código | Por que usar? |
+|------|--------|----------------|
+| Arredondamento | `round(notas, 1)` | Para padronizar apresentação dos dados |
+
+### Resultados Esperados
+- Média: 7.75
+- Mediana: 7.75
+- Desvio padrão: 1.09
+- Nota mais alta: 9.2
+- Nota mais baixa: 5.5
+
+---
+
+## Exercício 2 - Análise do mtcars
+
+### Descrição
+Utilização do dataset embutido `mtcars` para praticar análise exploratória de dados.
+
+### Código e Explicações
+
+| Item | Código | Por que usar? |
+|------|--------|----------------|
+| Carregar dataset | `data(mtcars)` | Para praticar com dados reais sem baixar arquivos |
+| Estrutura do objeto | `str(mtcars)` | Ver tipos de dados e dimensões (32 obs, 11 var) |
+| Estatísticas por variável | `summary(mtcars)` | Identificar variáveis numéricas vs categóricas |
+| Estatísticas específicas | `mean(mpg)`, `median(mpg)`, etc | Calcular medidas para uma variável de interesse |
+| Ordenar | `sort(hp)` | Ver distribuição dos valores |
+| Sequência numérica | `seq(1,10,2)` | Criar vetores com padrão (início, fim, passo) |
+| Repetir valores | `rep(7,4)` | Criar vetores com repetição |
+| Converter maiúsculas/minúsculas | `toupper(cyl)` / `tolower(cyl)` | Padronizar strings (ex: para comparar textos) |
+
+### Observações
+- Dataset possui **32 linhas** e **11 colunas**
+- Variáveis numéricas: mpg, disp, hp, drat, wt, qsec
+- Variáveis categóricas: cyl, vs, am, gear, carb
+
+---
+
+# Lista 2 - Gestão de Programas de Saúde (Listas e Datas)
+
+## Estrutura de Dados: Listas
+
+### Descrição
+Criação e manipulação de listas para gerenciar informações de programas de saúde.
+
+### Código e Explicações
+
+| Item | Código | Por que usar? |
+|------|--------|----------------|
+| Criar lista | `list()` | Para agrupar diferentes tipos de dados (texto, número, data) |
+| Converter para data | `as.Date()` | Permite comparar datas (antes/depois) |
+| Lista de listas | `programas <- list(p1, p2, p3)` | Organizar múltiplos programas em uma estrutura única |
+
+### Operações com Listas
+
+| Item | Código | Por que usar? |
+|------|--------|----------------|
+| Acessar elemento | `programa1$orcamento` | Extrair valor específico de uma lista |
+| Somar orçamentos | `sum(orcamentos)` | Calcular total investido |
+| Índice do maior valor | `which.max(orcamentos)` | Identificar programa com maior orçamento |
+| Data atual do sistema | `Sys.Date()` | Comparar com datas de início/fim |
+| Loop | `for(i in 1:3)` | Verificar condição para cada programa |
+| Data mais recente | `which.max(datas_inicio)` | Encontrar programa que começou por último |
+
+### Resultados Esperados
+- **Orçamento total**: R$ 2.400.000,00
+- **Programa com maior orçamento**: Vigilância epidemiológica da Doença de Chagas e Febre Maculosa (R$ 1.000.000,00)
+- **Programa com início mais recente**: Vigilância entomológica de carrapatos (01/08/2026)
+
+---
+
+# Lista 3 - Manipulação de Arquivos e Strings
+
+## Exercício 1 - Pipe com SINASC (DF)
+
+### Descrição
+Utilização do operador pipe (`%>%`) para processar dados do SINASC do Distrito Federal.
+
+### Código e Explicações
+
+| Item | Código | Por que usar? |
+|------|--------|----------------|
+| Define diretório | `setwd()` | Para R saber onde ler/escrever arquivos |
+| Carrega pacote | `library(tidyverse)` | Fornece `read_delim()`, `%>%`, `mutate()`, `filter()` |
+| Lê arquivo delimitado | `read_delim()` | Seu CSV usa `;` como separador |
+| Pula linhas | `skip = 3` | Remove cabeçalho com informações extras |
+| Nomeia colunas | `col_names = ...` | Dá nomes significativos às colunas |
+| Pipe | `%>%` | Encadeia operações - evita criar variáveis intermediárias |
+| Remove linha | `filter(ano != "Total")` | Elimina a linha de total do CSV |
+| Converte tipo | `mutate(across(...))` | Transforma texto em número |
+| Filtra ano | `filter(ano == 2024)` | Seleciona apenas dados de 2024 |
+| Cria coluna | `mutate(media_mensal = total / 12)` | Calcula média mensal a partir do total anual |
+
+### Por que usar pipe (`%>%`)?
+- Código mais legível (leia da esquerda para direita)
+- Evita variáveis temporárias
+- Facilita manutenção
+
+### Resultados Esperados (DF - 2024)
+- **Total de nascimentos**: 33.282
+- **Média mensal**: 2.773,5 nascimentos por mês
+
+---
+
+## Exercício 2 - Manipulação de Strings (Pacientes)
+
+### Descrição
+Criação de um arquivo CSV com dados de pacientes e extração de primeiro e último nomes.
+
+### Código e Explicações
+
+| Item | Código | Por que usar? |
+|------|--------|----------------|
+| Criar arquivo vazio | `file.create()` | Garante que o arquivo existe antes de escrever |
+| Criar tabela | `data.frame()` | Estrutura organizada para dados tabulares |
+| Salvar arquivo | `write.csv()` | Exporta dados para formato universal |
+| Ler arquivo | `read.csv()` | Importa dados de CSV |
+| Dividir string | `strsplit()` | Separa nome completo em partes |
+| Aplicar função | `sapply()` | Executa `strsplit()` para cada linha |
+| Extrair primeiro elemento | `function(x) x[1]` | Pega o primeiro nome |
+| Extrair último elemento | `function(x) x[length(x)]` | Pega o último nome |
+
+### Exemplo de `strsplit()`:
+"João da Silva" → strsplit → ["João", "da", "Silva"]
+→ primeiro = "João"
+→ último = "Silva"
+
+text
+
+### Resultados Esperados
+- **Total de pacientes**: 9
+- **Arquivos criados**: `pacientes.csv` e `nomes_pacientes.csv`
+
+---
+
+# Projeto Final - Taxa de Nascidos Vivos (TO)
+
+## As 5 Etapas da Pipeline de Dados
+
+| Etapa | Código | O que faz | Por que é importante? |
+|-------|--------|-----------|----------------------|
+| **1. Configuração** | `library()` | Carrega pacotes | Disponibiliza funções especializadas |
+| **2. Coleta** | `fetch_datasus()` | Baixa dados do DATASUS | Obtém dados oficiais do governo |
+| **3. Preprocessamento** | `process_sim()` / `process_sinasc()` | Limpa e padroniza | Converte dados brutos em formato utilizável |
+| **4. Transformação** | `summarise()`, `pull()` | Agrega e extrai valores | Calcula totais para a fórmula |
+| **5. Análise/Visualização** | `ggplot()`, `ggsave()` | Cria gráfico e relatório | Comunica resultados de forma visual |
+
+
+## Funções Específicas do microdatasus
+
+| Função | Finalidade |
+|--------|------------|
+| `fetch_datasus()` | Baixa arquivos .dbc do servidor FTP do DATASUS |
+| `process_sim()` | Decodifica variáveis do SIM (ex: causa mortis) |
+| `process_sinasc()` | Decodifica variáveis do SINASC (ex: anomalias) |
+
+## Gráfico e Relatório
+
+| Item | Código | Por que usar? |
+|------|--------|----------------|
+| Criar gráfico | `ggplot()` | Visualização profissional e customizável |
+| Gráfico de barras | `geom_col()` | Mostra uma única taxa de forma clara |
+| Salvar imagem | `ggsave()` | Exporta gráfico para uso em relatórios |
+| Salvar texto | `writeLines()` | Gera relatório descritivo em .txt |
+
+---
+
+# Resumo dos Conceitos Aprendidos
+
+| Lista | Conceito principal | Aplicação |
+|-------|-------------------|-----------|
+| Lista 1 | Estatística descritiva | Análise de notas de prova |
+| Lista 2 | Listas e datas | Gestão de programas de saúde |
+| Lista 3 | Pipe e strings | Análise de SINASC (DF) e cadastro de pacientes |
+| Projeto Final | Pipeline de dados | Cálculo de taxa de natalidade (TO) |
+
+---

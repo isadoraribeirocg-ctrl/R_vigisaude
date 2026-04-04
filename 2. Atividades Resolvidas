@@ -2,9 +2,6 @@
 
 ## Exercício 1
 
-# SOLUÇÃO COMPLETA PARA AUTENTICAÇÃO NO RSTUDIO
-# =============================================
-
 # PASSO 1: Remover qualquer autenticação anterior problemática
 drive_deauth()
 
@@ -28,7 +25,7 @@ options(gargle_verbosity = "debug")
 drive_auth()
 
 # Se a Opção A não funcionar, tente a Opção B:
-# drive_auth(email = "isadoraribeiro.cgomes@gmail.com", cache = TRUE)
+# drive_auth(email = "xxx", cache = TRUE)
 
 # Se ainda não funcionar, tente a Opção C:
 # drive_auth(use_oob = FALSE, cache = TRUE)
@@ -335,7 +332,180 @@ cat("\n   • importar_csv_hanta('dados.csv')   - Importar CSV")
 
 cat("\n\n📌 VARIÁVEIS GLOBAIS:")
 cat(sprintf("\n   • PASTA_CURSO_ID  <- '%s'", PASTA_CURSO_ID))
+
+
+
+#EXERCICIO 2
+
+## ERRO: Error in `drive_auth()`:
+! Can't get Google credentials.
+ℹ Are you running googledrive in a non-interactive session? Consider:
+• Call `drive_deauth()` to prevent the attempt to get credentials.
+• Call `drive_auth()` directly with all necessary specifics.
+ℹ See gargle's "Non-interactive auth" vignette for more details:
+  ℹ <https://gargle.r-lib.org/articles/non-interactive-auth.html>
+  Run `rlang::last_trace()` to see where the error occurred.
+
+#PROMPT
+
+Estou tendo o seguinte erro ao tentar autenticar no Google Drive usando o pacote `googledrive` no R:
+  
+  Error in `drive_auth()`:
+  ! Can't get Google credentials.
+ℹ Are you running googledrive in a non-interactive session? Consider:
+• Call `drive_deauth()` to prevent the attempt to get credentials.
+• Call `drive_auth()` directly with all necessary specifics.
+
+Contexto:
+- Uso o RStudio (ambiente interativo)
+- Meu email: 
+- O navegador não abre automaticamente quando chamo `drive_auth()`
+- Já tentei `drive_auth(use_oob = TRUE)` e também `drive_auth(email = TRUE, reauth = TRUE)`
+- O cache de tokens está em: C:/Users/isado/AppData/Local/gargle/gargle/Cache
+- O sistema operacional é Windows
+
+Perguntas:
+1. Por que o erro ocorre mesmo em ambiente interativo?
+2. Como forçar o R a abrir o navegador corretamente?
+3. Qual é a maneira correta de configurar o navegador padrão no R para Windows?
+4. Como verificar se o token salvo no cache ainda é válido?
+5. Existe uma maneira de testar a autenticação antes de rodar o script completo?
+
+
+
+#EXERCICIO 3
+
+# Lista de pacotes necessários
+required_packages <- c("googledrive", "dplyr", "ggplot2", "tidyr")
+
+# Instalar e carregar pacotes com feedback
+for (pkg in required_packages) {
+  if (!require(pkg, character.only = TRUE)) {
+    cat("📦 Instalando pacote:", pkg, "...\n")
+    install.packages(pkg, dependencies = TRUE)
+    library(pkg, character.only = TRUE)
+    cat("✓ Pacote instalado e carregado:", pkg, "\n")
+  } else {
+    cat("✓ Pacote já carregado:", pkg, 
+        "(versão", as.character(packageVersion(pkg)), ")\n")
+  }
+}
+
+cat("\n✅ Todos os pacotes estão prontos para uso!\n")
+
 cat(sprintf("\n   • PASTA_HANTA_ID  <- '%s'", PASTA_HANTA_ID))
 cat(sprintf("\n   • PASTA_HANTA_PATH <- '%s'", PASTA_HANTA_PATH))
 
 cat("\n\n✅ Tudo pronto! Hora de trabalhar na pasta Hanta!\n")
+
+
+#EXERCICIO 4
+
+# ============================================================
+# SCRIPT MODULAR - GOOGLE DRIVE CRUD
+# ============================================================
+
+# 1. SETUP ===================================================
+library(googledrive)
+
+setup <- function(email = "isadoraribeiro.cgomes@gmail.com") {
+  drive_auth(email = email)
+  drive_about()$user$emailAddress
+}
+
+# 2. PASTAS =================================================
+pasta_criar <- function(nome, pai = NULL) {
+  q <- sprintf("name='%s' and mimeType='application/vnd.google-apps.folder'", nome)
+  if (!is.null(pai)) q <- sprintf("%s and '%s' in parents", q, pai)
+  
+  existe <- drive_find(q = q, nrow = 1)
+  if (nrow(existe) > 0) return(existe)
+  
+  if (is.null(pai)) drive_mkdir(nome) else drive_mkdir(nome, path = as_id(pai))
+}
+
+pasta_listar <- function(id) {
+  conteudo <- drive_ls(as_id(id))
+  cat("\n📁", drive_get(id = id)$name, "-", nrow(conteudo), "itens\n")
+  if (nrow(conteudo) > 0) for (i in 1:nrow(conteudo)) 
+    cat(ifelse(grepl("folder", conteudo$drive_resource[[i]]$mimeType), "  📁", "  📄"), conteudo$name[i], "\n")
+  invisible(conteudo)
+}
+
+pasta_deletar <- function(id, confirmar = TRUE) {
+  if (confirmar && tolower(readline("Confirmar exclusão? (s/N): ")) != "s") return(FALSE)
+  drive_trash(drive_get(id = id))
+  TRUE
+}
+
+# 3. ARQUIVOS (CRUD) ========================================
+arquivo_criar <- function(nome, conteudo, pasta_id) {
+  tmp <- tempfile()
+  writeLines(as.character(conteudo), tmp)
+  arq <- drive_upload(tmp, path = as_id(pasta_id), name = nome)
+  unlink(tmp)
+  arq
+}
+
+arquivo_ler <- function(id) {
+  tmp <- tempfile()
+  drive_download(as_id(id), tmp, overwrite = TRUE)
+  conteudo <- readLines(tmp, warn = FALSE)
+  unlink(tmp)
+  cat("\n---", drive_get(id = id)$name, "---\n")
+  cat(paste(conteudo, collapse = "\n"), "\n----------------\n")
+  invisible(conteudo)
+}
+
+arquivo_editar <- function(id, novo_conteudo) {
+  tmp <- tempfile()
+  writeLines(as.character(novo_conteudo), tmp)
+  drive_update(as_id(id), media = tmp)
+  unlink(tmp)
+  TRUE
+}
+
+arquivo_deletar <- function(id, confirmar = TRUE) {
+  if (confirmar && tolower(readline("Confirmar exclusão? (s/N): ")) != "s") return(FALSE)
+  drive_trash(as_id(id))
+  TRUE
+}
+
+# 4. BUSCA ==================================================
+buscar <- function(nome, pasta_id = NULL) {
+  q <- sprintf("name='%s' and trashed=false", nome)
+  if (!is.null(pasta_id)) q <- sprintf("%s and '%s' in parents", q, pasta_id)
+  drive_find(q = q)
+}
+
+# 5. CONFIGURAÇÃO RÁPIDA DO PROJETO =========================
+configurar <- function(email = "isadoraribeiro.cgomes@gmail.com", 
+                       raiz = "Curso R", 
+                       trabalho = "Hanta") {
+  setup(email)
+  raiz_obj <- pasta_criar(raiz)
+  trab_obj <- pasta_criar(trabalho, raiz_obj$id)
+  
+  cat("\n✅ Conectado! Pasta ativa:", raiz, "/", trabalho, "\n")
+  cat("   ID:", trab_obj$id, "\n")
+  
+  # Retorna funções prontas para usar
+  list(
+    id = trab_obj$id,
+    listar = function() pasta_listar(trab_obj$id),
+    criar = function(nome, texto) arquivo_criar(nome, texto, trab_obj$id),
+    ler = function(nome_arquivo) {
+      arq <- buscar(nome_arquivo, trab_obj$id)
+      if (nrow(arq) > 0) arquivo_ler(arq$id[1]) else cat("❌ Não encontrado\n")
+    },
+    editar = function(nome_arquivo, novo_texto) {
+      arq <- buscar(nome_arquivo, trab_obj$id)
+      if (nrow(arq) > 0) arquivo_editar(arq$id[1], novo_texto) else cat("❌ Não encontrado\n")
+    },
+    deletar = function(nome_arquivo) {
+      arq <- buscar(nome_arquivo, trab_obj$id)
+      if (nrow(arq) > 0) arquivo_deletar(arq$id[1]) else cat("❌ Não encontrado\n")
+    }
+  )
+}
+

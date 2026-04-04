@@ -1,0 +1,341 @@
+# AULA 03
+
+## Exercício 1
+
+# SOLUÇÃO COMPLETA PARA AUTENTICAÇÃO NO RSTUDIO
+# =============================================
+
+# PASSO 1: Remover qualquer autenticação anterior problemática
+drive_deauth()
+
+# PASSO 2: Limpar cache de tokens antigos
+unlink(".secrets", recursive = TRUE)
+
+# PASSO 3: Instalar/atualizar pacotes (se necessário)
+install.packages("googledrive")
+install.packages("gargle")
+
+# PASSO 4: Carregar bibliotecas
+library(googledrive)
+library(gargle)
+
+# PASSO 5: Configurar opções para debug (opcional - mostra detalhes)
+options(gargle_verbosity = "debug")
+
+# PASSO 6: Autenticação - UMA DESTAS OPÇÕES VAI FUNCIONAR
+
+# Opção A: Autenticação mais simples (recomendada)
+drive_auth()
+
+# Se a Opção A não funcionar, tente a Opção B:
+# drive_auth(email = "isadoraribeiro.cgomes@gmail.com", cache = TRUE)
+
+# Se ainda não funcionar, tente a Opção C:
+# drive_auth(use_oob = FALSE, cache = TRUE)
+
+# PASSO 7: Verificar se funcionou
+tryCatch({
+  about <- drive_about()
+  cat("\n✅ AUTENTICAÇÃO BEM-SUCEDIDA!\n")
+  cat("📧 Email:", about$user$emailAddress, "\n")
+  cat("📁 Espaço utilizado:", about$storageQuota$usage, "/", about$storageQuota$limit, "\n")
+}, error = function(e) {
+  cat("\n❌ Falha na autenticação. Erro:", e$message, "\n")
+  cat("\nTente as instruções de solução de problemas abaixo.\n")
+})
+
+
+# Após autenticar com sucesso, execute este script completo
+
+library(googledrive)
+
+# Verificar autenticação
+drive_about()$user$emailAddress
+
+# Configurar pastas
+pasta_curso <- drive_get(path = "Curso R")
+if (nrow(pasta_curso) == 0) {
+  pasta_curso <- drive_mkdir("Curso R")
+}
+
+# Procurar ou criar Hanta
+pasta_hanta <- drive_get(path = file.path("Curso R", "Hanta"))
+if (nrow(pasta_hanta) == 0) {
+  pasta_hanta <- drive_mkdir("Hanta", path = pasta_curso)
+}
+
+# Confirmar
+cat("✅ Pasta de trabalho:", drive_get(id = pasta_hanta$id)$name)
+cat("📂 ID:", pasta_hanta$id)
+
+# Funções para usar
+listar <- function() drive_ls(pasta_hanta)
+criar <- function(nome, texto) {
+  tmp <- tempfile(); writeLines(texto, tmp)
+  drive_upload(tmp, path = pasta_hanta, name = nome)
+  unlink(tmp)
+}
+ler <- function(nome) {
+  arq <- drive_get(path = file.path(pasta_hanta$name, nome))
+  tmp <- tempfile(); drive_download(arq, tmp)
+  readLines(tmp)
+}
+
+# Testar
+criar("teste.txt", "Funcionou!")
+listar()
+ler("teste.txt")
+
+
+# SCRIPT COMPLETO - PASTA HANTA CONFIGURADA
+# =========================================
+
+# 1. CARREGAR BIBLIOTECA
+library(googledrive)
+
+# 2. VERIFICAR AUTENTICAÇÃO (já está funcionando)
+cat("\n", paste(rep("=", 60), collapse = ""), "\n")
+cat("VERIFICANDO AUTENTICAÇÃO\n")
+cat(paste(rep("=", 60), collapse = ""), "\n")
+
+about <- drive_about()
+cat(sprintf("\n✅ Conectado como: %s\n", about$user$emailAddress))
+cat(sprintf("📁 Espaço utilizado: %.2f MB / %.2f GB\n", 
+            as.numeric(about$storageQuota$usage) / 1e6, 
+            as.numeric(about$storageQuota$limit) / 1e9))
+
+# 3. CONFIGURAR PASTA "CURSO R"
+cat("\n", paste(rep("=", 60), collapse = ""), "\n")
+cat("CONFIGURANDO PASTA 'CURSO R'\n")
+cat(paste(rep("=", 60), collapse = ""), "\n")
+
+# Verificar se a pasta "Curso R" já existe
+pasta_curso <- tryCatch({
+  drive_get(path = "Curso R")
+}, error = function(e) {
+  return(data.frame())  # Retorna vazio se não encontrar
+})
+
+if(nrow(pasta_curso) == 0) {
+  cat("\n⚠️ Pasta 'Curso R' não encontrada. Criando...\n")
+  pasta_curso <- drive_mkdir("Curso R")
+  cat(sprintf("✓ Pasta 'Curso R' criada! (ID: %s)\n", pasta_curso$id))
+} else {
+  cat(sprintf("\n✓ Pasta 'Curso R' encontrada! (ID: %s)\n", pasta_curso$id))
+}
+
+# 4. DENTRO DE "CURSO R", CONFIGURAR PASTA "HANTA"
+cat("\n", paste(rep("=", 60), collapse = ""), "\n")
+cat("CONFIGURANDO PASTA 'HANTA'\n")
+cat(paste(rep("=", 60), collapse = ""), "\n")
+
+# Verificar se a pasta "Hanta" já existe dentro de "Curso R"
+pasta_hanta <- tryCatch({
+  drive_get(path = file.path("Curso R", "Hanta"))
+}, error = function(e) {
+  return(data.frame())  # Retorna vazio se não encontrar
+})
+
+if(nrow(pasta_hanta) == 0) {
+  cat("\n⚠️ Pasta 'Hanta' não encontrada. Criando dentro de 'Curso R'...\n")
+  pasta_hanta <- drive_mkdir("Hanta", path = pasta_curso)
+  cat(sprintf("✓ Pasta 'Hanta' criada! (ID: %s)\n", pasta_hanta$id))
+} else {
+  cat(sprintf("\n✓ Pasta 'Hanta' encontrada! (ID: %s)\n", pasta_hanta$id))
+}
+
+# 5. MOSTRAR ESTRUTURA
+cat("\n", paste(rep("=", 60), collapse = ""), "\n")
+cat("ESTRUTURA DE PASTAS\n")
+cat(paste(rep("=", 60), collapse = ""), "\n")
+
+cat("\n📁 Meu Drive/")
+cat(sprintf("\n   └── 📁 %s/", pasta_curso$name))
+cat(sprintf("\n        └── 📁 %s/ ← PASTA DE TRABALHO ATUAL", pasta_hanta$name))
+
+# 6. LISTAR CONTEÚDO DA PASTA HANTA
+cat("\n\n", paste(rep("=", 60), collapse = ""), "\n")
+cat("CONTEÚDO DA PASTA HANTA\n")
+cat(paste(rep("=", 60), collapse = ""), "\n")
+
+conteudo_hanta <- drive_ls(pasta_hanta)
+
+if(nrow(conteudo_hanta) == 0) {
+  cat("\n📂 A pasta 'Hanta' está vazia.\n")
+} else {
+  cat(sprintf("\n📂 Encontrados %d itens:\n\n", nrow(conteudo_hanta)))
+  for(i in 1:nrow(conteudo_hanta)) {
+    tipo <- ifelse(grepl("folder", conteudo_hanta$drive_resource[[i]]$mimeType), "📁", "📄")
+    cat(sprintf("%s %s\n", tipo, conteudo_hanta$name[i]))
+  }
+}
+
+# 7. FUNÇÕES PRÁTICAS PARA TRABALHAR NA PASTA HANTA
+
+# Função para listar arquivos
+listar_hanta <- function() {
+  cat("\n=== ARQUIVOS NA PASTA HANTA ===\n")
+  arquivos <- drive_ls(pasta_hanta)
+  
+  if(nrow(arquivos) == 0) {
+    cat("Nenhum arquivo encontrado.\n")
+  } else {
+    for(i in 1:nrow(arquivos)) {
+      tipo <- ifelse(grepl("folder", arquivos$drive_resource[[i]]$mimeType), "📁", "📄")
+      cat(sprintf("%s %s\n", tipo, arquivos$name[i]))
+    }
+    cat(sprintf("\nTotal: %d itens\n", nrow(arquivos)))
+  }
+  cat("================================\n")
+}
+
+# Função para criar arquivo
+criar_hanta <- function(nome_arquivo, conteudo) {
+  cat(sprintf("\n📄 Criando arquivo: %s\n", nome_arquivo))
+  
+  arquivo_temp <- tempfile()
+  writeLines(as.character(conteudo), arquivo_temp)
+  
+  drive_upload(
+    arquivo_temp,
+    path = pasta_hanta,
+    name = nome_arquivo
+  )
+  
+  unlink(arquivo_temp)
+  cat("✓ Arquivo criado com sucesso!\n")
+}
+
+# Função para ler arquivo
+ler_hanta <- function(nome_arquivo) {
+  cat(sprintf("\n📖 Lendo arquivo: %s\n", nome_arquivo))
+  
+  # Buscar o arquivo
+  arquivo <- drive_get(path = file.path("Curso R", "Hanta", nome_arquivo))
+  
+  if(nrow(arquivo) == 0) {
+    cat("❌ Arquivo não encontrado!\n")
+    return(NULL)
+  }
+  
+  # Baixar e ler
+  arquivo_temp <- tempfile()
+  drive_download(arquivo, arquivo_temp, overwrite = TRUE)
+  conteudo <- readLines(arquivo_temp, warn = FALSE)
+  unlink(arquivo_temp)
+  
+  cat("\n--- CONTEÚDO ---\n")
+  cat(paste(conteudo, collapse = "\n"), "\n")
+  cat("----------------\n")
+  
+  return(invisible(conteudo))
+}
+
+# Função para editar arquivo
+editar_hanta <- function(nome_arquivo, novo_conteudo) {
+  cat(sprintf("\n✏️ Editando arquivo: %s\n", nome_arquivo))
+  
+  # Buscar o arquivo
+  arquivo <- drive_get(path = file.path("Curso R", "Hanta", nome_arquivo))
+  
+  if(nrow(arquivo) == 0) {
+    cat("❌ Arquivo não encontrado!\n")
+    return(FALSE)
+  }
+  
+  # Atualizar
+  arquivo_temp <- tempfile()
+  writeLines(as.character(novo_conteudo), arquivo_temp)
+  drive_update(arquivo, media = arquivo_temp)
+  unlink(arquivo_temp)
+  
+  cat("✓ Arquivo atualizado com sucesso!\n")
+  return(TRUE)
+}
+
+# Função para deletar arquivo
+deletar_hanta <- function(nome_arquivo) {
+  cat(sprintf("\n🗑️ Deletando arquivo: %s\n", nome_arquivo))
+  
+  # Buscar o arquivo
+  arquivo <- drive_get(path = file.path("Curso R", "Hanta", nome_arquivo))
+  
+  if(nrow(arquivo) == 0) {
+    cat("❌ Arquivo não encontrado!\n")
+    return(FALSE)
+  }
+  
+  # Mover para lixeira
+  drive_trash(arquivo)
+  cat("✓ Arquivo movido para a lixeira!\n")
+  return(TRUE)
+}
+
+# Função para exportar CSV
+exportar_csv_hanta <- function(df, nome_arquivo) {
+  cat(sprintf("\n📊 Exportando CSV: %s\n", nome_arquivo))
+  
+  arquivo_temp <- tempfile(fileext = ".csv")
+  write.csv(df, arquivo_temp, row.names = FALSE)
+  
+  drive_upload(
+    arquivo_temp,
+    path = pasta_hanta,
+    name = nome_arquivo
+  )
+  
+  unlink(arquivo_temp)
+  cat(sprintf("✓ Exportados %d registros\n", nrow(df)))
+}
+
+# Função para importar CSV
+importar_csv_hanta <- function(nome_arquivo) {
+  cat(sprintf("\n📥 Importando CSV: %s\n", nome_arquivo))
+  
+  # Buscar o arquivo
+  arquivo <- drive_get(path = file.path("Curso R", "Hanta", nome_arquivo))
+  
+  if(nrow(arquivo) == 0) {
+    cat("❌ Arquivo não encontrado!\n")
+    return(NULL)
+  }
+  
+  # Baixar e ler
+  arquivo_temp <- tempfile(fileext = ".csv")
+  drive_download(arquivo, arquivo_temp, overwrite = TRUE)
+  df <- read.csv(arquivo_temp)
+  unlink(arquivo_temp)
+  
+  cat(sprintf("✓ Importados %d registros\n", nrow(df)))
+  return(df)
+}
+
+# 8. VARIÁVEIS GLOBAIS
+PASTA_CURSO_ID <- pasta_curso$id
+PASTA_HANTA_ID <- pasta_hanta$id
+PASTA_HANTA_PATH <- file.path("Curso R", "Hanta")
+
+# 9. RESUMO FINAL
+cat("\n", paste(rep("=", 60), collapse = ""), "\n")
+cat("✅ CONFIGURAÇÃO CONCLUÍDA!\n")
+cat(paste(rep("=", 60), collapse = ""), "\n")
+
+cat("\n📂 SUA PASTA DE TRABALHO:")
+cat(sprintf("\n   📁 %s/", pasta_curso$name))
+cat(sprintf("\n      └── 📁 %s/ ← VOCÊ ESTÁ AQUI", pasta_hanta$name))
+
+cat("\n\n🔧 FUNÇÕES DISPONÍVEIS:")
+cat("\n   • listar_hanta()                    - Listar arquivos")
+cat("\n   • criar_hanta('arquivo.txt', 'texto') - Criar arquivo")
+cat("\n   • ler_hanta('arquivo.txt')          - Ler arquivo")
+cat("\n   • editar_hanta('arquivo.txt', 'novo texto') - Editar")
+cat("\n   • deletar_hanta('arquivo.txt')      - Deletar arquivo")
+cat("\n   • exportar_csv_hanta(df, 'dados.csv') - Exportar CSV")
+cat("\n   • importar_csv_hanta('dados.csv')   - Importar CSV")
+
+cat("\n\n📌 VARIÁVEIS GLOBAIS:")
+cat(sprintf("\n   • PASTA_CURSO_ID  <- '%s'", PASTA_CURSO_ID))
+cat(sprintf("\n   • PASTA_HANTA_ID  <- '%s'", PASTA_HANTA_ID))
+cat(sprintf("\n   • PASTA_HANTA_PATH <- '%s'", PASTA_HANTA_PATH))
+
+cat("\n\n✅ Tudo pronto! Hora de trabalhar na pasta Hanta!\n")

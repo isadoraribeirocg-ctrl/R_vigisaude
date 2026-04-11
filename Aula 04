@@ -1,0 +1,71 @@
+# Boletim Epidemiologico da Leptospirose no Brasil (2024)
+
+install.packages("janitor")
+library(remotes)
+library(microdatasus)
+library(tidyverse)
+library(skimr)
+library(janitor)
+
+# 1. DOWNLOAD DOS DADOS
+raw_lepto <- fetch_datasus(
+  year_start = 2024, 
+  year_end = 2024, 
+  uf = "all", 
+  information_system = "SINAN-LEPTOSPIROSE"
+)
+
+# 2. Limpeza Manual
+dados_lepto <- raw_lepto %>%
+  mutate(
+    # Converter Idade 
+    NU_IDADE_N = as.numeric(NU_IDADE_N),
+    IDADE_ANOS = case_when(
+      NU_IDADE_N > 4000 ~ NU_IDADE_N - 4000,
+      NU_IDADE_N > 3000 ~ (NU_IDADE_N - 3000)/12, # Meses para anos
+      TRUE ~ 0
+    ),
+    # Traduzir Sexo
+    CS_SEXO = case_when(
+      CS_SEXO == "M" ~ "Masculino",
+      CS_SEXO == "F" ~ "Feminino",
+      TRUE ~ "Ignorado"
+    ),
+    # Traduzir Evolução
+    EVOLUCAO = case_when(
+      EVOLUCAO == "1" ~ "Cura",
+      EVOLUCAO == "2" ~ "Óbito por Leptospirose",
+      EVOLUCAO == "3" ~ "Óbito por outras causas",
+      TRUE ~ "Ignorado/Branco"
+    ),
+    # Traduzir Sintomas (1 = Sim, 2 = Não, 9 = Ignorado)
+    CLI_FEBRE = if_else(CLI_FEBRE == "1", "Sim", "Não/Ignorado"),
+    CLI_ICTERI = if_else(CLI_ICTERI == "1", "Sim", "Não/Ignorado")
+  ) %>%
+  # Converter datas
+  mutate(across(starts_with("DT_"), as.Date, format = "%Y%m%d"))
+
+tinytex::install_tinytex()
+if (!require(tinytex)) install.packages("tinytex")
+
+# 3. SELEÇÃO DAS VARIÁVEIS SOLICITADAS
+dados_filtrados <- dados_lepto %>%
+  select(
+    any_of(c(
+      "DT_NOTIFIC", "SEM_NOT", "SG_UF_NOT", "ID_MUNICIP", "DT_SIN_PRI", 
+      "NU_IDADE_N", "CS_SEXO", "CS_RACA", "CLI_FEBRE", "CLI_ICTERI", 
+      "CLI_RENAL", "CLASSI_FIN", "EVOLUCAO", "DT_OBITO"
+    ))
+  )
+
+# 4. FUNÇÃO DE DESCRIÇÃO
+gerar_sumario <- function(df) {
+  list(
+    estatisticas = skim(df),
+    frequencia_sexo = tabyl(df, CS_SEXO),
+    frequencia_evolucao = tabyl(df, EVOLUCAO)
+  )
+}
+
+resumo <- gerar_sumario(dados_filtrados)
+print(resumo$frequencia_evolucao)

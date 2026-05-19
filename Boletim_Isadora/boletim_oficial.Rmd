@@ -1,0 +1,744 @@
+---
+
+title: "Boletim Epidemiológico de Hantavirose no Brasil - 2025"
+author: "Isadora Ribeiro de Carvalho Gomes"
+date: "`r Sys.Date()`"
+output:
+  word_document: default
+  html_document:
+    df_print: paged
+  pdf_document: default
+---
+
+```{r capa, echo=FALSE, out.width='100%', fig.align='center'}
+knitr::include_graphics(
+  "hanta_boletim.JPG"
+)
+```
+
+
+# Introdução
+
+A hantavirose é uma zoonose viral aguda causada por vírus RNA pertencentes ao gênero Orthohantavirus, da família Hantaviridae. Na natureza, esses vírus são mantidos em ciclos silvestres por meio da infecção crônica de roedores, que atuam como reservatórios naturais da doença. A infecção humana ocorre, principalmente, pela inalação de aerossóis contaminados com urina, fezes ou saliva de roedores infectados. Outras formas de transmissão, menos frequentes, incluem o contato do vírus com mucosas por meio de mãos contaminadas e, raramente, mordeduras de roedores.
+
+Nas Américas, a hantavirose pode se manifestar desde quadros febris inespecíficos até formas graves conhecidas como Síndrome Cardiopulmonar por Hantavírus (SCPH), caracterizada pela rápida evolução para insuficiência respiratória aguda e edema pulmonar não cardiogênico. O gênero Orthohantavirus é dividido entre as variantes do “Velho Mundo”, associadas à febre hemorrágica com síndrome renal (FHSR), predominantes na Europa e Ásia, e as do “Novo Mundo”, relacionadas à SCPH nas Américas. No Brasil, destacam-se variantes como Araraquara, Juquitiba e Castelo dos Sonhos, frequentemente associadas a casos graves da doença.
+
+A hantavirose é considerada um importante problema de saúde pública devido à elevada taxa de letalidade, que pode alcançar cerca de 40%, além da necessidade frequente de internação em unidades de terapia intensiva em razão da rápida progressão clínica. A doença ocorre predominantemente em áreas rurais e está frequentemente relacionada a atividades ocupacionais ligadas à agricultura e ao manejo ambiental, acometendo principalmente homens em idade produtiva.
+
+Dada a relevância e a importância de compreender as características do perfil epidemiológico da doença no País, este Boletim tem por objetivo descrever os casos segundo o péfil sociodemografio da doença registrados no Brasil, durante o período de 2025 e identificando a distribuição espacial.
+
+# Metodologia
+
+Os dados utilizados nesta análise foram obtidos a partir do Sistema de Informação de Agravos de Notificação (Sinan), contemplando todas as notificações de hantavirose registradas no Brasil no período de 2025. Trata-se de um estudo observacional descritivo, realizado com base em dados secundários extraídos em 31 de março de 2026.
+
+Foram analisadas as variáveis disponíveis na ficha de notificação do Sinan, incluindo unidade federativa de residência, faixa etária, sexo, raça/cor, ocupação, histórico de exposição, classificação final do caso e evolução. Para a tabulação, processamento e análise dos dados, utilizaram-se os softwares TabWin32 versão 4.15, Microsoft® Excel 2016 e RStudio.
+
+Este boletim foi elaborado a partir de dados secundários anonimizados, de acesso público, disponíveis no portal Transferência de Arquivos – DataSUS.
+
+# Resultados e Discussão
+
+```{r pacotes, include=FALSE}
+library(tidyverse)
+library(sf)
+library(geobr)
+library(ggplot2)
+library(janitor)
+library(scales)
+library(patchwork)
+
+```
+
+
+```{r dados, include=FALSE}
+dados_hanta <- read.csv("Hanta.csv")
+
+
+```
+
+
+```{r include=FALSE}
+
+# Sexo
+tabela_sexo <- dados_hanta %>% group_by(CS_SEXO)%>%
+  count(CS_SEXO, name = "n")
+
+
+# Raça/cor
+tabela_raca <- dados_hanta %>%
+  count(CS_RACA, name = "n")
+
+# Exposição
+tabela_exposicao <- dados_hanta %>%
+  count(EXPO_N, name = "n")
+
+# Classificação final
+tabela_classificacao <- dados_hanta %>%
+  count(CLASSI_FIN, name = "n")
+
+# Evolução
+tabela_evolucao <- dados_hanta %>%
+  count(EVOLUCAO, name = "n")
+```
+
+
+```{r mapa, echo=FALSE, message=FALSE, warning=FALSE}
+
+# Mapa do Brasil por UF
+
+mapa <- geobr::read_state(year = 2020)
+
+# Contagem de casos por UF
+
+casos_uf <- dados_hanta %>%
+  
+  count(SG_UF, name = "casos")
+
+# Ajustar nome da coluna para fazer o join
+
+casos_uf <- casos_uf %>%
+  
+  rename(name_state = SG_UF)
+
+# Juntar casos ao mapa
+
+mapa <- mapa %>%
+  
+  left_join(casos_uf, by = "name_state")
+
+# Gráfico
+
+ggplot(mapa) +
+  
+  geom_sf(
+    aes(fill = casos),
+    color = "white",
+    linewidth = 0.2
+  ) +
+
+  scale_fill_gradient(
+    low = "#ffe5e5",
+    high = "#990000",
+    na.value = "grey90"
+  ) +
+
+  labs(
+    fill = "Casos"
+  ) +
+
+  theme_minimal() +
+
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank()
+  )
+
+```
+
+```{r faixa etaria, include=FALSE}
+dados_hanta <- dados_hanta %>%
+  mutate(
+    faixa_etaria = case_when(
+      IDADE < 10 ~ "0-9",
+      IDADE >= 10 & IDADE < 20 ~ "10-19",
+      IDADE >= 20 & IDADE < 30 ~ "20-29",
+      IDADE >= 30 & IDADE < 40 ~ "30-39",
+      IDADE >= 40 & IDADE < 50 ~ "40-49",
+      IDADE >= 50 & IDADE < 60 ~ "50-59",
+      IDADE >= 60 & IDADE < 70 ~ "60-69",
+      IDADE >= 70 ~ "70+",
+      TRUE ~ NA_character_
+    )
+  )
+```
+
+```{r função para tabelas, include=FALSE}
+criar_tabela <- function(base, variavel) {
+
+  base %>%
+    count({{variavel}}) %>%
+    mutate(
+      percentual = round(n/sum(n)*100,1)
+    ) %>%
+    arrange(desc(n))
+
+}
+```
+
+
+```{r função para gráficos, include=FALSE}
+criar_grafico <- function(base,
+                           variavel,
+                           titulo,
+                           eixo_x,
+                           eixo_y = "Número de casos") {
+
+  ggplot(base,
+         aes(x = {{variavel}},
+             y = n,
+             fill = n)) +
+
+    geom_col() +
+
+    scale_fill_gradient(
+      low = "#ffcccc",
+      high = "#990000"
+    ) +
+
+    labs(
+      title = titulo,
+      x = eixo_x,
+      y = eixo_y
+    ) +
+
+    theme_minimal() +
+
+    theme(
+      plot.title = element_text(
+        hjust = 0.5,
+        face = "bold",
+        size = 14
+      ),
+
+      axis.text.x = element_text(
+        angle = 45,
+        hjust = 1
+      ),
+
+      legend.position = "none"
+    )
+
+}
+```
+
+```{r include=FALSE}
+tab <- dados_hanta %>%
+  dplyr::count(faixa_etaria, name = "n")
+```
+
+
+```{r faixa_etaria_grafico, echo=FALSE}
+grafico_faixa <- ggplot(tab,
+       aes(x = faixa_etaria,
+           y = n,
+           fill = faixa_etaria)) + 
+
+  geom_col(
+    width = 0.5,
+    color = "black",
+    linewidth = 0.2
+  ) +
+
+  scale_fill_manual(
+    values = c(
+      "0-9" = "#e5f5e0",
+      "10-19" = "#c7e9c0",
+      "20-29" = "#a1d99b",
+      "30-39" = "#74c476",
+      "40-49" = "#41ab5d",
+      "50-59" = "#238b45",
+      "60-69" = "#006d2c",
+      "70+" = "#00441b"
+    )
+  ) +
+
+  labs(
+    title = "Distribuição por faixa etária",
+    x = "Faixa etária",
+    y = "Número de casos"
+  ) +
+
+  theme_minimal() +
+
+  theme(
+    plot.title = element_text(
+      hjust = 0.5,
+      face = "bold"
+    ),
+
+    axis.text = element_text(
+      color = "black"
+    ),
+
+    legend.position = "none"
+  )
+
+grafico_faixa
+```
+
+
+
+
+```{r sexo, echo=FALSE}
+ggplot(tabela_sexo,
+       aes(x = CS_SEXO,
+           y = n,
+           fill = CS_SEXO)) +
+
+  geom_col(
+    width = 0.4,
+    color = "black",
+    linewidth = 0.2
+  ) +
+
+
+  scale_fill_manual(
+    values = c(
+      "Masculino" = "#006400",
+      "Feminino" = "#66CDAA",
+      "Ignorado" = "#98FB98"
+    )
+  ) +
+
+  labs(
+    title = "Distribuição por sexo",
+    x = "Sexo",
+    y = "Número de casos"
+  ) +
+
+  theme_minimal() +
+
+  theme(
+    plot.title = element_text(
+      hjust = 0.5,
+      face = "bold"
+    ),
+
+    legend.position = "none"
+  )
+```
+
+```{r raca, echo=FALSE}
+
+dados_hanta <- dados_hanta %>%
+  
+  mutate(
+    
+    CS_RACA = case_when(
+      
+      is.na(CS_RACA) ~ "Em branco",
+      
+      CS_RACA == "" ~ "Em branco",
+      
+      TRUE ~ as.character(CS_RACA)
+    )
+  )
+
+# Recriar tabela
+
+tabela_raca <- dados_hanta %>%
+  
+  count(CS_RACA, name = "n")
+
+# Gráfico
+
+ggplot(tabela_raca,
+       aes(x = CS_RACA,
+           y = n,
+           fill = CS_RACA)) +
+
+  geom_col(
+    width = 0.5,
+    color = "black",
+    linewidth = 0.2
+  ) +
+
+  scale_fill_manual(
+    values = c(
+      "Branca" = "#40E0D0",
+      "Preta" = "#66CDAA",
+      "Parda" = "#90EE90",
+      "Amarela" = "#2E8B57",
+      "Indígena" = "#33a02c",
+      "Ignorado" = "#999999",
+      "Em branco" = "#d9d9d9"
+    )
+  ) +
+
+  labs(
+    title = "Distribuição por raça/cor",
+    x = "Raça/cor",
+    y = "Número de casos"
+  ) +
+
+  theme_minimal() +
+
+  theme(
+    plot.title = element_text(
+      hjust = 0.5,
+      face = "bold"
+    ),
+
+    axis.text.x = element_text(
+      angle = 45,
+      hjust = 1
+    ),
+
+    axis.text = element_text(
+      color = "black"
+    ),
+
+    legend.position = "none"
+  )
+```
+
+```{r ocupaçao, echo=FALSE}
+
+dados_ocupacao <- dados_hanta %>%
+  
+  mutate(
+    
+    OCUPACAO_DESC = case_when(
+      
+      ID_OCUPA_N == "41104" ~ "Auxiliar de escritório",
+      ID_OCUPA_N == "51421" ~ "Faxineiro",
+      ID_OCUPA_N == "51741" ~ "Porteiro",
+      ID_OCUPA_N == "61100" ~ "Produtor agropecuário",
+      ID_OCUPA_N == "61200" ~ "Trabalhador agrícola",
+      ID_OCUPA_N == "62100" ~ "Trabalhador agropecuário em geral",
+      ID_OCUPA_N == "62202" ~ "Trabalhador volante da agricultura",
+      ID_OCUPA_N == "63121" ~ "Pescador artesanal",
+      ID_OCUPA_N == "63212" ~ "Trabalhador da extração vegetal",
+      ID_OCUPA_N == "63260" ~ "Extrativista florestal",
+      ID_OCUPA_N == "61330" ~ "Trabalhador florestal",
+      ID_OCUPA_N == "62301" ~ "Trabalhador pecuário",
+      ID_OCUPA_N == "62311" ~ "Trabalhador da pecuária bovina",
+      ID_OCUPA_N == "62321" ~ "Trabalhador da suinocultura",
+      ID_OCUPA_N == "62330" ~ "Trabalhador da avicultura",
+      ID_OCUPA_N == "64101" ~ "Operador agrícola",
+      ID_OCUPA_N == "77340" ~ "Operador de máquinas agrícolas",
+      ID_OCUPA_N == "77410" ~ "Operador de máquinas florestais",
+      
+      ID_OCUPA_N == "71521" ~ "Pedreiro",
+      ID_OCUPA_N == "71561" ~ "Servente de obras",
+      ID_OCUPA_N == "71702" ~ "Carpinteiro",
+      ID_OCUPA_N == "71661" ~ "Pintor de obras",
+      ID_OCUPA_N == "71020" ~ "Mestre de obras",
+      ID_OCUPA_N == "71511" ~ "Operário da construção civil",
+      
+      ID_OCUPA_N == "78251" ~ "Motorista de caminhão",
+      ID_OCUPA_N == "78230" ~ "Motorista particular",
+      ID_OCUPA_N == "78222" ~ "Motorista de ônibus",
+      ID_OCUPA_N == "78322" ~ "Motorista entregador",
+      ID_OCUPA_N == "86215" ~ "Caminhoneiro",
+      
+      ID_OCUPA_N == "22350" ~ "Enfermeiro",
+      ID_OCUPA_N == "22340" ~ "Farmacêutico",
+      ID_OCUPA_N == "22330" ~ "Médico veterinário",
+      ID_OCUPA_N == "22311" ~ "Médico clínico",
+      ID_OCUPA_N == "22360" ~ "Biomédico",
+      ID_OCUPA_N == "22412" ~ "Odontólogo",
+      ID_OCUPA_N == "22413" ~ "Cirurgião-dentista",
+      ID_OCUPA_N == "22514" ~ "Médico infectologista",
+      ID_OCUPA_N == "32220" ~ "Técnico de enfermagem",
+      ID_OCUPA_N == "32242" ~ "Técnico em saúde",
+      ID_OCUPA_N == "32111" ~ "Técnico laboratorial",
+      ID_OCUPA_N == "51610" ~ "Agente comunitário de saúde",
+      ID_OCUPA_N == "51612" ~ "Agente de combate às endemias",
+      
+      ID_OCUPA_N == "52111" ~ "Vendedor varejista",
+      ID_OCUPA_N == "52112" ~ "Balconista",
+      ID_OCUPA_N == "52113" ~ "Comerciante varejista",
+      ID_OCUPA_N == "51210" ~ "Empregado doméstico",
+      ID_OCUPA_N == "51320" ~ "Cozinheiro",
+      ID_OCUPA_N == "51350" ~ "Garçom",
+      ID_OCUPA_N == "51420" ~ "Coletor de resíduos",
+      ID_OCUPA_N == "51421" ~ "Faxineiro",
+      ID_OCUPA_N == "51431" ~ "Lavanderia",
+      ID_OCUPA_N == "51911" ~ "Auxiliar de serviços gerais",
+      ID_OCUPA_N == "51920" ~ "Catador de recicláveis",
+      ID_OCUPA_N == "51993" ~ "Cuidador domiciliar",
+      ID_OCUPA_N == "51994" ~ "Cuidador",
+      
+      ID_OCUPA_N == "51721" ~ "Agente de segurança",
+      ID_OCUPA_N == "51731" ~ "Vigia",
+      ID_OCUPA_N == "51733" ~ "Vigilante",
+      
+      ID_OCUPA_N == "99999" ~ "Ignorado / não informado",
+      ID_OCUPA_N == "99899" ~ "Não classificado",
+      ID_OCUPA_N == "XXX" ~ "Informação inválida",
+      ID_OCUPA_N == "0" ~ "Sem registro",
+      
+      TRUE ~ "Outras ocupações"
+    )
+  )
+
+# Criar tabela das ocupações
+
+tabela_ocupacao <- dados_ocupacao %>%
+  
+  filter(
+    !OCUPACAO_DESC %in% c(
+      "Ignorado / não informado",
+      "Não classificado",
+      "Informação inválida",
+      "Sem registro"
+    )
+  ) %>%
+  
+  count(OCUPACAO_DESC, name = "casos") %>%
+  
+  arrange(desc(casos))
+
+# Selecionar TOP 10
+
+top_ocupacoes <- tabela_ocupacao %>%
+  
+  slice_head(n = 10)
+
+# Gráfico
+
+ggplot(top_ocupacoes,
+       aes(x = reorder(OCUPACAO_DESC, casos),
+           y = casos,
+           fill = OCUPACAO_DESC)) +
+
+  geom_col(
+    width = 0.7,
+    color = "black",
+    linewidth = 0.2
+  ) +
+
+  coord_flip() +
+
+  scale_fill_brewer(
+    palette = "Greens"
+  ) +
+
+  labs(
+    title = "Principais ocupações dos casos de hantavirose",
+    x = "Ocupação",
+    y = "Número de casos"
+  ) +
+
+  theme_minimal() +
+
+  theme(
+    plot.title = element_text(
+      hjust = 0.5,
+      face = "bold"
+    ),
+
+    legend.position = "none",
+
+    axis.text = element_text(
+      color = "black"
+    )
+  )
+```
+
+```{r exposiçao, echo=FALSE}
+
+dados_hanta <- dados_hanta %>%
+  
+  mutate(
+    
+    EXPO_N = case_when(
+      
+      is.na(EXPO_N) ~ "Em branco",
+      
+      EXPO_N == "" ~ "Em branco",
+      
+      TRUE ~ as.character(EXPO_N)
+    )
+  )
+
+# Recriar tabela
+
+tabela_exposicao <- dados_hanta %>%
+  
+  count(EXPO_N, name = "n")
+
+# Gráfico
+
+ggplot(tabela_exposicao,
+       aes(x = EXPO_N,
+           y = n,
+           fill = EXPO_N)) +
+
+  geom_col(
+    width = 0.6,
+    color = "black",
+    linewidth = 0.2
+  ) +
+
+  scale_fill_brewer(
+    palette = "Greens"
+  ) +
+
+  labs(
+    title = "Histórico de exposição",
+    x = "Exposição",
+    y = "Número de casos"
+  ) +
+
+  theme_minimal() +
+
+  theme(
+    plot.title = element_text(
+      hjust = 0.5,
+      face = "bold"
+    ),
+
+    axis.text = element_text(
+      color = "black"
+    ),
+
+    axis.text.x = element_text(
+      angle = 45,
+      hjust = 1
+    ),
+
+    legend.position = "none"
+  )
+```
+
+```{r classificaçao, echo=FALSE}
+
+dados_hanta <- dados_hanta %>%
+  
+  mutate(
+    
+    CLASSI_FIN = case_when(
+      
+      CLASSI_FIN == "1" ~ "Confirmado",
+      CLASSI_FIN == "2" ~ "Descartado",
+      CLASSI_FIN == "8" ~ "Inconsistância",
+     
+      
+      is.na(CLASSI_FIN) ~ "Ignorado",
+      
+      CLASSI_FIN == "" ~ "Ignorado",
+      
+      TRUE ~ as.character(CLASSI_FIN)
+    )
+  )
+
+# Criar tabela
+
+tabela_classificacao <- dados_hanta %>%
+  
+  count(CLASSI_FIN, name = "n")
+
+print(tabela_classificacao)
+
+# Gráfico
+
+ggplot(tabela_classificacao,
+       aes(x = CLASSI_FIN,
+           y = n,
+           fill = CLASSI_FIN)) +
+
+  geom_col(
+    width = 0.6,
+    color = "black",
+    linewidth = 0.2
+  ) +
+
+  scale_fill_brewer(
+    palette = "Greens"
+  ) +
+
+  labs(
+    title = "Classificação final do caso",
+    x = "Classificação",
+    y = "Número de casos"
+  ) +
+
+  theme_minimal() +
+
+  theme(
+    plot.title = element_text(
+      hjust = 0.5,
+      face = "bold"
+    ),
+
+    axis.text = element_text(
+      color = "black"
+    ),
+
+    legend.position = "none"
+  )
+
+```
+
+```{r evolucao, echo=FALSE}
+
+dados_hanta <- dados_hanta %>%
+  
+  mutate(
+    
+    EVOLUCAO = case_when(
+      
+      EVOLUCAO == "1" ~ "Cura",
+      EVOLUCAO == "2" ~ "Óbito pelo agravo",
+      EVOLUCAO == "3" ~ "Óbito por outra causa",
+      EVOLUCAO == "9" ~ "Ignorado",
+      
+      is.na(EVOLUCAO) ~ "Em branco",
+      
+      EVOLUCAO == "" ~ "Em branco",
+      
+      TRUE ~ as.character(EVOLUCAO)
+    )
+  )
+
+# Criar tabela
+
+tabela_evolucao <- dados_hanta %>%
+  
+  count(EVOLUCAO, name = "n")
+
+print(tabela_evolucao)
+
+# Gráfico
+
+ggplot(tabela_evolucao,
+       aes(x = EVOLUCAO,
+           y = n,
+           fill = EVOLUCAO)) +
+
+  geom_col(
+    width = 0.6,
+    color = "black",
+    linewidth = 0.2
+  ) +
+
+  scale_fill_brewer(
+    palette = "Greens"
+  ) +
+
+  labs(
+    title = "Evolução dos casos",
+    x = "Evolução",
+    y = "Número de casos"
+  ) +
+
+  theme_minimal() +
+
+  theme(
+    plot.title = element_text(
+      hjust = 0.5,
+      face = "bold"
+    ),
+
+    axis.text = element_text(
+      color = "black"
+    ),
+
+    axis.text.x = element_text(
+      angle = 20,
+      hjust = 1
+    ),
+
+    legend.position = "none"
+  )
+```
+
+
+
+
+
+
+
+

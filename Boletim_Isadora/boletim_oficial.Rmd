@@ -14,6 +14,7 @@ output:
 knitr::include_graphics(
   "hanta_boletim.JPG"
 )
+#capa do boletim
 ```
 
 
